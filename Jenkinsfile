@@ -4,22 +4,24 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('sidoreldocker')
+    IMAGE_NAME = 'sidoreldocker/jenkins-docker-hub'
   }
   stages {
     stage('Build') {
       steps {
-        sh 'docker build -t sidoreldocker/jenkins-docker-hub .'
+        sh 'docker build -t $IMAGE_NAME .'
       }
     }
     stage('Login') {
       steps {
-        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+        withCredentials([usernamePassword(credentialsId: 'sidoreldocker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+        }
       }
     }
     stage('Push') {
       steps {
-        sh 'docker push sidoreldocker/jenkins-docker-hub'
+        sh 'docker push $IMAGE_NAME'
       }
     }
   }
